@@ -20,7 +20,22 @@
         var $slides = $slider.find('li');
         var $active_index = $slider.find('.active').index();
         var $active;
+        var slideInterval;
+
         if ($active_index != -1) { $active = $slides.eq($active_index); }
+
+        function setAutoScrollInterval() {
+          if(slideInterval) {
+            clearInterval(slideInterval);
+          }
+          slideInterval = setInterval(function(){
+              $active_index = $slider.find('.active').index();
+                if ($slides.length == $active_index + 1) $active_index = 0; // loop to start
+                else $active_index += 1;
+              moveToSlide($active_index);
+            }, options.transition + options.interval
+          );
+        }
 
         // Transitions the caption depending on alignment
         function captionTransition(caption, duration) {
@@ -72,6 +87,8 @@
           }
         }
 
+        setAutoScrollInterval();
+
         // Set height of slider
         if (options.indicators) {
           // Add height if indicators are present
@@ -107,17 +124,7 @@
               moveToSlide(curr_index);
 
               // reset interval
-              clearInterval($interval);
-              $interval = setInterval(
-                function(){
-                  $active_index = $slider.find('.active').index();
-                  if ($slides.length == $active_index + 1) $active_index = 0; // loop to start
-                  else $active_index += 1;
-
-                  moveToSlide($active_index);
-
-                }, options.transition + options.interval
-              );
+              setAutoScrollInterval();
             });
             $indicators.append($indicator);
           });
@@ -145,16 +152,6 @@
           $active.find('.caption').velocity({opacity: 1, translateX: 0, translateY: 0}, {duration: options.transition, queue: false, easing: 'easeOutQuad'});
         });
 
-        // auto scroll
-        $interval = setInterval(
-          function(){
-            $active_index = $slider.find('.active').index();
-            moveToSlide($active_index + 1);
-
-          }, options.transition + options.interval
-        );
-
-
         // HammerJS, Swipe navigation
 
         // Touch Event
@@ -168,7 +165,7 @@
           if (e.gesture.pointerType === "touch") {
 
             // reset interval
-            clearInterval($interval);
+            clearInterval(slideInterval);
 
             var direction = e.gesture.direction;
             var x = e.gesture.deltaX;
@@ -238,37 +235,16 @@
             swipeLeft = false;
             swipeRight = false;
 
-            // Restart interval
-            clearInterval($interval);
-            $interval = setInterval(
-              function(){
-                $active_index = $slider.find('.active').index();
-                if ($slides.length == $active_index + 1) $active_index = 0; // loop to start
-                else $active_index += 1;
-
-                moveToSlide($active_index);
-
-              }, options.transition + options.interval
-            );
+            setAutoScrollInterval();
           }
         });
 
         $this.on('sliderPause', function() {
-          clearInterval($interval);
+          clearInterval(slideInterval);
         });
 
         $this.on('sliderStart', function() {
-          clearInterval($interval);
-          $interval = setInterval(
-            function(){
-              $active_index = $slider.find('.active').index();
-              if ($slides.length == $active_index + 1) $active_index = 0; // loop to start
-              else $active_index += 1;
-
-              moveToSlide($active_index);
-
-            }, options.transition + options.interval
-          );
+          setAutoScrollInterval();
         });
 
       });
